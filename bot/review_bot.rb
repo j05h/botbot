@@ -1,5 +1,5 @@
 module Bot
-  class Bot < SlackRubyBot::Bot
+  class ReviewBot < SlackRubyBot::Bot
     # REVIEW_MATCHER is defined in .env file
     # should be a regex that matches what your review URLS look like
 
@@ -30,12 +30,6 @@ module Bot
       end
     end
 
-    match Bot.review_matcher do |client, data, match|
-      client.say(channel: data.channel, text: "I should track that review. (#{match[0]})")
-      reviews << match[0]
-      reviews.uniq!
-    end
-
     command 'list' do |client, data, match|
       response = if reviews.size > 0
                    "Sure <@#{data.user}>, here are the reviews which are outstanding:\n #{reviews.join(',')}"
@@ -45,11 +39,19 @@ module Bot
       client.say(text: response, channel: data.channel)
     end
 
+    match ReviewBot.review_matcher do |client, data, match|
+      track_review client, data, match[0]
+    end
+
     match /add (http.*)/ do |client, data, match|
-      response = "<@#{data.user}>, I added #{match[1]}"
+      track_review client, data, match[1]
+    end
+
+    def self.track_review client, data, review
+      response = "<@#{data.user}>, I'm tracking #{review}"
       client.say(text: response, channel: data.channel)
 
-      reviews << match[1]
+      reviews << review
       reviews.uniq!
     end
 

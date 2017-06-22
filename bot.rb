@@ -1,2 +1,2 @@
 require 'slack-ruby-bot'
-require 'bot/bot'
+require 'bot/review_bot'

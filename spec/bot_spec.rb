@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe Bot::Bot do
+describe Bot::ReviewBot do
   def app
-    Bot::Bot.instance
+    Bot::ReviewBot.instance
   end
 
   subject { app }
@@ -10,9 +10,9 @@ describe Bot::Bot do
   context "transparently add reviews" do
     before do
       @testcase = ENV['REVIEW_MATCHER_TEST_URL']
-      @answer = Bot::Bot.review_matcher.match(@testcase)[0]
+      @answer = Bot::ReviewBot.review_matcher.match(@testcase)[0]
       @message  = "@here please check out #{@testcase} please"
-      @response = "I should track that review. (#{@answer})"
+      @response = "<@user>, I'm tracking #{@answer}"
     end
 
     it 'sees reviews' do
@@ -21,13 +21,13 @@ describe Bot::Bot do
 
     it 'adds reviews' do
       expect(channel: "channel", message: @message).to respond_with_slack_message(@response)
-      expect(Bot::Bot.reviews.last).to eq(@answer)
+      expect(Bot::ReviewBot.reviews.last).to eq(@answer)
     end
 
     it 'does not add two reviews' do
       expect(channel: "channel", message: @message).to respond_with_slack_message(@response)
       expect(channel: "channel", message: @message).to respond_with_slack_message(@response)
-      expect(Bot::Bot.reviews.size).to eq(1)
+      expect(Bot::ReviewBot.reviews.size).to eq(1)
     end
 
     it 'prints out the reviews' do
@@ -42,23 +42,23 @@ describe Bot::Bot do
     it "adds a review" do
       url = "http://foo.bar.baz/123"
       message = "#{SlackRubyBot.config.user} add #{url}"
-      response = "<@user>, I added #{url}"
+      response = "<@user>, I'm tracking #{url}"
       expect(channel: "channel", message: message).to respond_with_slack_message(response)
 
-      expect(Bot::Bot.reviews.last).to eq(url)
+      expect(Bot::ReviewBot.reviews.last).to eq(url)
     end
   end
 
   context "directly removes a review" do
     it "removes a review" do
       url = "http://foo.bar.baz/123"
-      Bot::Bot.reviews << url
+      Bot::ReviewBot.reviews << url
 
       message = "#{SlackRubyBot.config.user} remove #{url}"
       response = "<@user>, I removed #{url}"
       expect(channel: "channel", message: message).to respond_with_slack_message(response)
 
-      expect(Bot::Bot.reviews.last).to_not eq(url)
+      expect(Bot::ReviewBot.reviews.last).to_not eq(url)
     end
   end
 
